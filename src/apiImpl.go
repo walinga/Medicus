@@ -17,7 +17,9 @@ type Doctor struct {
     Last  string `json:"last"`
     Contact string `json:"contact"`
     Location string `json:"location"`
-    Rating string `json:"rating"`
+    NumRatings int `json:"numRatings"`
+    TotalSum int `json:"totalSum"`
+    Rating int `json:"rating"`
     Specialty string `json:"specialty"`
 }
 
@@ -25,6 +27,7 @@ type Doctor struct {
 type User struct {
     Name string `json:"name"`
     Password string `json:"password"` // This will be sent as an encrypted str
+    RatedDocs string[]
 }
 
 
@@ -34,7 +37,8 @@ func ping (w http.ResponseWriter, r *http.Request) {
 
 
 
-func verifyBody(r *http.Request) []byte {
+func ReadUser(w http.ResponseWriter, r *http.Request) User {
+	var user User
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576)) // big #
 	if err != nil {
 		panic(err)
@@ -58,7 +62,13 @@ func login(w http.ResponseWriter, r *http.Request) {
             panic(err)
         }
     }
+    return user
+}
 
+func login(w http.ResponseWriter, r *http.Request) {
+	var err error
+	user := ReadUser(w, r)
+	
 	url := URL + "users/" + user.Name
 	ref := firebase.NewReference(url)
 
@@ -69,25 +79,27 @@ func login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-
-
 func getUser(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
 
 	username := vars["username"]
+	dr := getUserHelp(username)
+
+	json.NewEncoder(w).Encode(dr)
+}
+
+func getUserHelp(username string) User {
 	personUrl := URL + "users/" + username
 	personRef := firebase.NewReference(personUrl).Export(false)
 
 	dr := User{}
 
-	if err = personRef.Value(&dr); err != nil {
+	if err := personRef.Value(&dr); err != nil {
 		panic(err)
 	}
-
-	json.NewEncoder(w).Encode(dr)
+	return dr
 }
-
 
 func addDoctor(w http.ResponseWriter, r *http.Request){
 
@@ -146,3 +158,21 @@ func getJsonResponse() ([]byte, error){
 	return json.MarshalIndent(doctor, "", "  ")
 }
 */
+func rateDoctor(w http.ResponseWriter, r *http.Request) {
+	var err error
+	vars := mux.Vars(r)
+	curDoc := vars["contact"]
+	rating := vars["rating"]
+
+	user := ReadUser(w, r)
+
+	for _, doc := range user.RatedDocs {
+		if (curDoc == doc) {
+			log.Printf("Doctor already rated!")
+			return
+		}
+	}
+	curDoc.numRatings ++
+	curDoc.totalSum += rating
+	newRating := curDoc.totalSum / curDoc.numRatings
+}
