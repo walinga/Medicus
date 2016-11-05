@@ -1,13 +1,15 @@
 package main
 
 import (
+	"log"
 	"fmt"
 	"net/http"
 	"encoding/json"
 	"github.com/melvinmt/firebase"
 )
 
-const URL string = "https://medicus-24749.firebaseio.com/"
+const URL string = "https://testing-86363.firebaseio.com/users/2"
+// "https://medicus-24749.firebaseio.com/"
 
 type DoctorName struct {
     First string
@@ -36,25 +38,23 @@ func serveRest(w http.ResponseWriter, r *http.Request){
 
 func getJsonResponse() ([]byte, error){
 	doctor := DoctorName{
-		First: "Dr",
-		Last: "Pepper",
+		First: "Matthew",
+		Last: "Walinga",
 	}
 
 	return json.MarshalIndent(doctor, "", "  ")
 }
 
 
-
-
 func login(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	url := URL
+	url := URL 
 	ref := firebase.NewReference(url)
 
 	doctor := DoctorName{
-		First: "Dr",
-		Last: "Pepper",
+		First: "Matthew",
+		Last: "Walinga",
 	}
 
 	if err = ref.Write(doctor); err != nil {
@@ -64,22 +64,30 @@ func login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(doctor)
 }
 
+
 func getUser(w http.ResponseWriter, r *http.Request) {
+
 	var err error
+	
+	/*
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err {
 		panic(err)
 	}
+	*/
 
 	personUrl := URL
-	personRef := firebase.NewReference(personUrl).Export(false)
+	personRef := firebase.NewReference(personUrl)
 
 	dr := User{}
+	log.Println("created Dr")
 
-	if err = personRef.Value(dr); err != nil {
+	if err = personRef.Value(&dr); err != nil {
+		log.Println("Yo")
 		panic(err)
 	}
 
-	fmt.Println(dr.Name.First, dr.Name.Last) 
+	
+	json.NewEncoder(w).Encode(dr)
 
 }
