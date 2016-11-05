@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"github.com/gorilla/mux"
+	"log"
 )
 
 const URL string = "https://medicus-24749.firebaseio.com/"
@@ -27,7 +28,7 @@ type Doctor struct {
 type User struct {
     Name string `json:"name"`
     Password string `json:"password"` // This will be sent as an encrypted str
-    RatedDocs string[]
+    RatedDocs []string
 }
 
 
@@ -37,7 +38,7 @@ func ping (w http.ResponseWriter, r *http.Request) {
 
 
 
-func ReadUser(w http.ResponseWriter, r *http.Request) User {
+func verifyBody(r *http.Request) []byte {
 	var user User
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576)) // big #
 	if err != nil {
@@ -49,10 +50,7 @@ func ReadUser(w http.ResponseWriter, r *http.Request) User {
     return body
 }
 
-
-
-func login(w http.ResponseWriter, r *http.Request) {
-	var err error
+func ReadUser(w http.ResponseWriter, r *http.Request) User {
 	var user User
 	body := verifyBody(r)
 	if err := json.Unmarshal(body, &user); err != nil {
@@ -64,6 +62,22 @@ func login(w http.ResponseWriter, r *http.Request) {
     }
     return user
 }
+
+
+
+/*func login(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var user User
+	body := verifyBody(r)
+	if err := json.Unmarshal(body, &user); err != nil {
+        w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+        w.WriteHeader(422) // unprocessable entity
+        if err := json.NewEncoder(w).Encode(err); err != nil {
+            panic(err)
+        }
+    }
+    return user
+}*/
 
 func login(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -161,10 +175,11 @@ func getJsonResponse() ([]byte, error){
 func rateDoctor(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
-	curDoc := vars["contact"]
+	docConc := vars["contact"]
 	rating := vars["rating"]
 
 	user := ReadUser(w, r)
+	curDoc := getDoctor(docConc)
 
 	for _, doc := range user.RatedDocs {
 		if (curDoc == doc) {
@@ -175,4 +190,12 @@ func rateDoctor(w http.ResponseWriter, r *http.Request) {
 	curDoc.numRatings ++
 	curDoc.totalSum += rating
 	newRating := curDoc.totalSum / curDoc.numRatings
+}
+
+func getDoctor(contactInfo string) {
+
+}
+
+func match(w http.ResponseWriter, r *http.Request) {
+
 }
