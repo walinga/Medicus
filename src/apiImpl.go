@@ -89,9 +89,42 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 }
 
 
+func addDoctor(w http.ResponseWriter, r *http.Request){
+
+	var err error
+	var doctor Doctor
+	body := verifyBody(r)
+
+	if err := json.Unmarshal(body, &doctor); err != nil {
+        w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+        w.WriteHeader(422) // unprocessable entity
+        if err := json.NewEncoder(w).Encode(err); err != nil {
+            panic(err)
+        }
+    }
+
+	url := URL + "doctors/" + doctor.First + doctor.Last
+	ref := firebase.NewReference(url)
+
+	if err = ref.Write(doctor); err != nil {
+		panic(err)
+	}
+
+	json.NewEncoder(w).Encode(doctor)
 
 
+}
 
+
+/*
+First string `json:"first"`
+    Last  string `json:"last"`
+    Contact string `json:"contact"`
+    Location string `json:"location"`
+    Rating string `json:"rating"`
+    Specialty string `json:"specialty"`
+
+*/
 
 /*
 func serveRest(w http.ResponseWriter, r *http.Request){

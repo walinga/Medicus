@@ -30,4 +30,10 @@ var routes = Routes{
         "/users/{username}",
         getUser,
     },
+    Route{
+        "addDoctor",
+        "POST",
+        "/addDoctor",
+        addDoctor,
+    },
 }
