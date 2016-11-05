@@ -7,6 +7,8 @@ import (
 	"github.com/melvinmt/firebase"
 )
 
+const URL string = "https://medicus-24749.firebaseio.com/"
+
 type DoctorName struct {
     First string
     Last  string
@@ -47,7 +49,7 @@ func getJsonResponse() ([]byte, error){
 func login(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	url := "https://testing-86363.firebaseio.com/users/"
+	url := URL
 	ref := firebase.NewReference(url)
 
 	doctor := DoctorName{
@@ -59,12 +61,17 @@ func login(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
+	json.NewEncoder(w).Encode(doctor)
 }
 
-func getUsers(w http.ResponseWriter, r *http.Request) {
+func getUser(w http.ResponseWriter, r *http.Request) {
 	var err error
+	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
+	if err {
+		panic(err)
+	}
 
-	personUrl := "https://testing-86363.firebaseio.com/users"
+	personUrl := URL
 	personRef := firebase.NewReference(personUrl).Export(false)
 
 	dr := User{}

@@ -28,6 +28,6 @@ var routes = Routes{
         "getUsers",
         "GET",
         "/users/{userId}",
-        getUsers,
+        getUser,
     },
 }
