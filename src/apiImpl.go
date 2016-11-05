@@ -21,33 +21,18 @@ type Doctor struct {
     Specialty string `json:"specialty"`
 }
 
+
 type User struct {
     Name string `json:"name"`
     Password string `json:"password"` // This will be sent as an encrypted str
 }
 
+
 func ping (w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Working well!")
 }
 
-func serveRest(w http.ResponseWriter, r *http.Request){
-	response, err := getJsonResponse()
-	if err != nil {
-		panic(err)
-	}
 
-	fmt.Fprintf(w, string(response))
-
-}
-
-func getJsonResponse() ([]byte, error){
-	doctor := Doctor {
-		First: "Dr",
-		Last: "Pepper",
-	}
-
-	return json.MarshalIndent(doctor, "", "  ")
-}
 
 func verifyBody(r *http.Request) []byte {
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576)) // big #
@@ -59,6 +44,8 @@ func verifyBody(r *http.Request) []byte {
     }
     return body
 }
+
+
 
 func login(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -82,11 +69,13 @@ func login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
+
+
 func getUser(w http.ResponseWriter, r *http.Request) {
 	var err error
 	vars := mux.Vars(r)
-	username := vars["username"]
 
+	username := vars["username"]
 	personUrl := URL + "users/" + username
 	personRef := firebase.NewReference(personUrl).Export(false)
 
@@ -98,3 +87,29 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(dr)
 }
+
+
+
+
+
+
+/*
+func serveRest(w http.ResponseWriter, r *http.Request){
+	response, err := getJsonResponse()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Fprintf(w, string(response))
+
+}
+
+func getJsonResponse() ([]byte, error){
+	doctor := Doctor {
+		First: "Dr",
+		Last: "Pepper",
+	}
+
+	return json.MarshalIndent(doctor, "", "  ")
+}
+*/
