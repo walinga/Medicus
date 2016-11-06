@@ -10,14 +10,14 @@ import (
 	"io/ioutil"
 	"github.com/gorilla/mux"
 	"log"
-	//"time"
+	"time"
 	"crypto/sha1"
-	"hash"
 )
 
 const URL string = "https://medicus-24749.firebaseio.com/"
 
 type Doctor struct {
+
     First string `json:"first"`
     Last  string `json:"last"`
     Contact string `json:"contact"`
@@ -28,19 +28,23 @@ type Doctor struct {
     Specialty string `json:"specialty"`
 }
 
+type myCookie struct {
+	CookieData string `json:"cookieData"`
+}
 
 type User struct {
     Name string `json:"name"`
     Password string `json:"password"` // This will be sent as an encrypted str
     RatedDocs []string
-    Cookie string
+    Cookie myCookie
 }
 
-func createCookie(username string) hash.Hash {
+func createCookie(username string) string {
 	h := sha1.New()
+	var b [] byte
 	io.WriteString(h, username)
-	io.WriteString(h, "time")//time.Now())
-	return h
+	io.WriteString(h, time.Now().Format(time.UnixDate))
+	return string(h.Sum(b))
 }
 
 
@@ -81,13 +85,13 @@ func login(w http.ResponseWriter, r *http.Request) {
 	
 	url := URL + "users/" + user.Name
 	ref := firebase.NewReference(url)
+	user.Cookie = myCookie{createCookie(user.Name)}
 
 	if err = ref.Write(user); err != nil {
 		panic(err)
 	}
 
-	c := createCookie(user.Name)
-	json.NewEncoder(w).Encode(c)
+	json.NewEncoder(w).Encode(user.Cookie)
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
