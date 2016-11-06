@@ -47,7 +47,7 @@ var routes = Routes{
         "GET",
         "/doctor/{contact}",
         getDoctor,
-    }
+    },
     Route{
         "match",
         "GET",

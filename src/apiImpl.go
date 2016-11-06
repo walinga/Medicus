@@ -10,6 +10,9 @@ import (
 	"io/ioutil"
 	"github.com/gorilla/mux"
 	"log"
+	//"time"
+	"crypto/sha1"
+	"hash"
 )
 
 const URL string = "https://medicus-24749.firebaseio.com/"
@@ -30,6 +33,14 @@ type User struct {
     Name string `json:"name"`
     Password string `json:"password"` // This will be sent as an encrypted str
     RatedDocs []string
+    Cookie string
+}
+
+func createCookie(username string) hash.Hash {
+	h := sha1.New()
+	io.WriteString(h, username)
+	io.WriteString(h, "time")//time.Now())
+	return h
 }
 
 
@@ -75,7 +86,8 @@ func login(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	json.NewEncoder(w).Encode(user)
+	c := createCookie(user.Name)
+	json.NewEncoder(w).Encode(c)
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
@@ -183,8 +195,8 @@ func getDoctorHelp(cntct string) Doctor {
 
 func match(w http.ResponseWriter, r *http.Request) {
 	// Find top 5 highest-rated doctors who are closest to the user
-	matchFookinRef := firebase(URL + "doctors")
-	json.NewEncoder(w).Encode(matchFookInRef)
+	matchFookinRef := firebase.NewReference(URL + "doctors")
+	json.NewEncoder(w).Encode(matchFookinRef)
     	//.startAt(5)
     	//.endAt(0.1)
     log.Printf("accounts matching email address")//, snap.val())
