@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"time"
-	"crypto/sha1"
+	"crypto/sha256"
 )
 
 const URL string = "https://medicus-24749.firebaseio.com/"
@@ -36,11 +36,11 @@ type User struct {
     Name string `json:"name"`
     Password string `json:"password"` // This will be sent as an encrypted str
     RatedDocs []string
-    Cookie myCookie
+    Cookie string
 }
 
 func createCookie(username string) string {
-	h := sha1.New()
+	h := sha256.New()
 	var b [] byte
 	io.WriteString(h, username)
 	io.WriteString(h, time.Now().Format(time.UnixDate))
@@ -83,37 +83,47 @@ func login(w http.ResponseWriter, r *http.Request) {
 	var err error
 	user := ReadUser(w, r)
 	
+	c := myCookie{createCookie(user.Name)}
+	user.Cookie = c.CookieData
 	url := URL + "users/" + user.Name
 	ref := firebase.NewReference(url)
-	user.Cookie = myCookie{createCookie(user.Name)}
 
 	if err = ref.Write(user); err != nil {
 		panic(err)
 	}
 
-	json.NewEncoder(w).Encode(user.Cookie)
+	json.NewEncoder(w).Encode(c)
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
-	
 	vars := mux.Vars(r)
 
-	username := vars["username"]
-	dr := getUserHelp(username)
+	// We need to use the Authorization header cookie to look up user
+	c := r.Header.Get("Authorization")
 
-	json.NewEncoder(w).Encode(dr)
+	username := vars["username"]
+	usr := getUserHelp(username)
+	if (usr.Cookie == c) { // Make sure user's cookie is correct
+		json.NewEncoder(w).Encode(usr)
+	} else {
+		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+        w.WriteHeader(400) // Bad cookie
+        if err := json.NewEncoder(w).Encode(c); err != nil {
+            panic(err)
+        }
+	}
 }
 
 func getUserHelp(username string) User {
 	personUrl := URL + "users/" + username
 	personRef := firebase.NewReference(personUrl).Export(false)
 
-	dr := User{}
+	usr := User{}
 
-	if err := personRef.Value(&dr); err != nil {
+	if err := personRef.Value(&usr); err != nil {
 		panic(err)
 	}
-	return dr
+	return usr
 }
 
 
@@ -199,6 +209,7 @@ func getDoctorHelp(cntct string) Doctor {
 }
 
 
+// Machine learning
 func match(w http.ResponseWriter, r *http.Request) {
 	// Find top 5 highest-rated doctors who are closest to the user
 	matchFookinRef := firebase.NewReference(URL + "doctors")
