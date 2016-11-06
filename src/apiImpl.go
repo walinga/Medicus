@@ -182,5 +182,10 @@ func getDoctorHelp(cntct string) Doctor {
 
 
 func match(w http.ResponseWriter, r *http.Request) {
-
+	// Find top 5 highest-rated doctors who are closest to the user
+	matchFookinRef := firebase(URL + "doctors")
+	json.NewEncoder(w).Encode(matchFookInRef)
+    	//.startAt(5)
+    	//.endAt(0.1)
+    log.Printf("accounts matching email address")//, snap.val())
 }
