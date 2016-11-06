@@ -39,7 +39,13 @@ var routes = Routes{
     Route{
         "rate",
         "PUT",
-        "/doctors/{contact}/rate/{rating}",
+        "/doctor/{contact}/rate/{rating}",
         rateDoctor,
+    },
+    Route{
+        "getDoctor",
+        "GET",
+        "/doctor/{contact}",
+        getDoctor,
     },
 }

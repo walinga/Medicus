@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/melvinmt/firebase"
 	"io"
+	"strconv"
 	"io/ioutil"
 	"github.com/gorilla/mux"
 	"log"
@@ -39,7 +40,6 @@ func ping (w http.ResponseWriter, r *http.Request) {
 
 
 func verifyBody(r *http.Request) []byte {
-	var user User
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576)) // big #
 	if err != nil {
 		panic(err)
@@ -64,21 +64,6 @@ func ReadUser(w http.ResponseWriter, r *http.Request) User {
 }
 
 
-
-/*func login(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var user User
-	body := verifyBody(r)
-	if err := json.Unmarshal(body, &user); err != nil {
-        w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-        w.WriteHeader(422) // unprocessable entity
-        if err := json.NewEncoder(w).Encode(err); err != nil {
-            panic(err)
-        }
-    }
-    return user
-}*/
-
 func login(w http.ResponseWriter, r *http.Request) {
 	var err error
 	user := ReadUser(w, r)
@@ -94,7 +79,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
-	var err error
+	
 	vars := mux.Vars(r)
 
 	username := vars["username"]
@@ -115,86 +100,86 @@ func getUserHelp(username string) User {
 	return dr
 }
 
-func addDoctor(w http.ResponseWriter, r *http.Request){
 
-	var err error
-	var doctor Doctor
+
+func ReadDoctor(w http.ResponseWriter, r *http.Request) Doctor {
+	var dr Doctor
 	body := verifyBody(r)
 
-	if err := json.Unmarshal(body, &doctor); err != nil {
+	if err := json.Unmarshal(body, &dr); err != nil {
         w.Header().Set("Content-Type", "application/json; charset=UTF-8")
         w.WriteHeader(422) // unprocessable entity
         if err := json.NewEncoder(w).Encode(err); err != nil {
             panic(err)
         }
     }
+    return dr
+}
 
-	url := URL + "doctors/" + doctor.First + doctor.Last
+
+func addDoctor(w http.ResponseWriter, r *http.Request){
+
+	var err error
+	dr := ReadDoctor(w, r)
+	
+	url := URL + "doctors/" + dr.Contact
 	ref := firebase.NewReference(url)
 
-	if err = ref.Write(doctor); err != nil {
+	if err = ref.Write(dr); err != nil {
 		panic(err)
 	}
 
-	json.NewEncoder(w).Encode(doctor)
-
-
+	json.NewEncoder(w).Encode(dr)
 }
 
+	
 
-/*
-First string `json:"first"`
-    Last  string `json:"last"`
-    Contact string `json:"contact"`
-    Location string `json:"location"`
-    Rating string `json:"rating"`
-    Specialty string `json:"specialty"`
 
-*/
-
-/*
-func serveRest(w http.ResponseWriter, r *http.Request){
-	response, err := getJsonResponse()
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Fprintf(w, string(response))
-
-}
-
-func getJsonResponse() ([]byte, error){
-	doctor := Doctor {
-		First: "Dr",
-		Last: "Pepper",
-	}
-
-	return json.MarshalIndent(doctor, "", "  ")
-}
-*/
 func rateDoctor(w http.ResponseWriter, r *http.Request) {
-	var err error
+	
 	vars := mux.Vars(r)
 	docConc := vars["contact"]
 	rating := vars["rating"]
 
 	user := ReadUser(w, r)
-	curDoc := getDoctor(docConc)
+	curDoc := getDoctorHelp(docConc)
 
 	for _, doc := range user.RatedDocs {
-		if (curDoc == doc) {
+		if (docConc == doc) {
 			log.Printf("Doctor already rated!")
 			return
 		}
 	}
-	curDoc.numRatings ++
-	curDoc.totalSum += rating
-	newRating := curDoc.totalSum / curDoc.numRatings
+	curDoc.NumRatings ++
+	newStr, _ := strconv.Atoi(rating)
+	curDoc.TotalSum += newStr
+	newRating := curDoc.TotalSum / curDoc.NumRatings
+	curDoc.Rating = newRating
 }
 
-func getDoctor(contactInfo string) {
 
+func getDoctor(w http.ResponseWriter, r *http.Request) {
+	
+	vars := mux.Vars(r)
+	cntct := vars["contact"]
+
+	dr := getDoctorHelp(cntct)
+
+	json.NewEncoder(w).Encode(dr)
 }
+
+func getDoctorHelp(cntct string) Doctor {
+	personUrl := URL + "doctors/" + cntct
+	personRef := firebase.NewReference(personUrl).Export(false)
+
+	dr := Doctor{}
+
+	if err := personRef.Value(&dr); err != nil {
+		panic(err)
+	}
+	return dr
+}
+
 
 func match(w http.ResponseWriter, r *http.Request) {
 
