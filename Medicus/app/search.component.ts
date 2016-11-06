@@ -14,6 +14,18 @@ import { MedicusService }         from './services/medicus-service';
       <a routerLink="/search" routerLinkActive="active">Search</a>
   </nav>
 <br />
+<ul class="doctors">
+  <li *ngFor="let doctor of doctors" (click)="onSelect(doctor)"
+      [class.selected]="doctor === selectedHero">
+    <span class="badge">{{doctor.first}}</span>
+    <span>{{doctor.first}}</span>
+  </li>
+</ul>
+
+  `,
+  styleUrls: [ 'main.css' ]
+})
+/*
 <h2> Doctors Available </h2>
 <div>
   <label>Doctor name:</label> <input #doctorName />
@@ -35,16 +47,9 @@ import { MedicusService }         from './services/medicus-service';
   <button (click)="goToDetail()">View Details</button>
 </div> 
 
-  `,
-  styleUrls: [ 'main.css' ]
-})
-/*
-
-
-
-
-
 */
+
+
 export class SearchComponent implements OnInit {
   doctors: Doctor[];
   selectedDoctor: Doctor;
@@ -56,7 +61,11 @@ export class SearchComponent implements OnInit {
   getDoctors(): void {
     this.medicusService
         .getDoctors()
-        .subscribe(res => this.doctors = res.json() as Doctor[]);
+        .subscribe( function(res) {res => this.doctors = res.json() as Doctor[];
+            console.log(res);
+
+          
+        } );
   }
 /*
   search(name: string): void {

@@ -17,12 +17,14 @@ export class HomeComponent implements OnInit {
   constructor(
     private router: Router,
     private medicusService: MedicusService) {
+  
+      this.user = new User("Harman", "fook");
   }
 
 
   ngOnInit(): void {
- //   this.medicusService.getUser()
- //     .then(user => this.user = user);
+   // this.medicusService.getUser()
+   //   .then(user => this.user = user);
   }
 
 

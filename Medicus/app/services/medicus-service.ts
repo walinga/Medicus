@@ -13,15 +13,17 @@ export class MedicusService {
   private headers = new Headers({'Content-Type': 'application/json'});
 
   private loginUrl = '/login';  // URL to web api
-  private doctorsUrl = '/doctor'
-  private usersUrl = '/users'
+  private doctorsUrl = '/app/doctors'
+  private usersUrl = '/app/users'
   private commentsUrl = ""
 
   constructor(private http: Http) { }
 
   getDoctors(): Observable<Response> {
+    console.log("Got hit");
     return this.http.get(this.doctorsUrl);
-  }
+    
+}
 
   getDoctor(id: string): Observable<Response> {//Observable<Doctor> {
     const url = `${this.doctorsUrl}/${id}`;

@@ -26,18 +26,12 @@ import { MedicusService } from '../services/medicus-service';
   <br />
   <label> Specialty: <input type="text" #specialty/> </label>
   <br />
-  <button (click)="signUp(username.value, password.value)">
+  <button (click)="signUp(first.value, last.value, contact.value, location.value, specialty.value)">
     Complete
   </button>
   `,
   styleUrls: [ 'main.css' ]
 })
-/*
-
-
-  <button (click)="signUp(first.value, last.value, contact.value, location.value, specialty.value)" > 
-  Sign Up </button>
-*/
 export class SignUpDoctorComponent {
     first: string;
     last:  string;
