@@ -166,11 +166,13 @@ func rateDoctor(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	user.RatedDocs = append(user.RatedDocs, docConc)
 	curDoc.NumRatings ++
 	newStr, _ := strconv.Atoi(rating)
 	curDoc.TotalSum += newStr
 	newRating := curDoc.TotalSum / curDoc.NumRatings
 	curDoc.Rating = newRating
+	fmt.Println(w, "Rated Doctor")
 }
 
 
