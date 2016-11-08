@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"time"
-	"crypto/sha256"
+	"crypto/sha1"
 )
 
 const URL string = "https://medicus-24749.firebaseio.com/"
@@ -36,11 +36,11 @@ type User struct {
     Name string `json:"name"`
     Password string `json:"password"` // This will be sent as an encrypted str
     RatedDocs []string
-    Cookie string
+    Cookie myCookie
 }
-
+ 
 func createCookie(username string) string {
-	h := sha256.New()
+	h := sha1.New()
 	var b [] byte
 	io.WriteString(h, username)
 	io.WriteString(h, time.Now().Format(time.UnixDate))
@@ -83,47 +83,37 @@ func login(w http.ResponseWriter, r *http.Request) {
 	var err error
 	user := ReadUser(w, r)
 	
-	c := myCookie{createCookie(user.Name)}
-	user.Cookie = c.CookieData
 	url := URL + "users/" + user.Name
 	ref := firebase.NewReference(url)
+	user.Cookie = myCookie{createCookie(user.Name)}
 
 	if err = ref.Write(user); err != nil {
 		panic(err)
 	}
 
-	json.NewEncoder(w).Encode(c)
+	json.NewEncoder(w).Encode(user.Cookie)
 }
 
 func getUser(w http.ResponseWriter, r *http.Request) {
+	
 	vars := mux.Vars(r)
 
-	// We need to use the Authorization header cookie to look up user
-	c := r.Header.Get("Authorization")
-
 	username := vars["username"]
-	usr := getUserHelp(username)
-	if (usr.Cookie == c) { // Make sure user's cookie is correct
-		json.NewEncoder(w).Encode(usr)
-	} else {
-		w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-        w.WriteHeader(400) // Bad cookie
-        if err := json.NewEncoder(w).Encode(c); err != nil {
-            panic(err)
-        }
-	}
+	dr := getUserHelp(username)
+
+	json.NewEncoder(w).Encode(dr)
 }
 
 func getUserHelp(username string) User {
 	personUrl := URL + "users/" + username
 	personRef := firebase.NewReference(personUrl).Export(false)
 
-	usr := User{}
+	dr := User{}
 
-	if err := personRef.Value(&usr); err != nil {
+	if err := personRef.Value(&dr); err != nil {
 		panic(err)
 	}
-	return usr
+	return dr
 }
 
 
@@ -176,12 +166,14 @@ func rateDoctor(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
 	user.RatedDocs = append(user.RatedDocs, docConc)
 	curDoc.NumRatings ++
 	newStr, _ := strconv.Atoi(rating)
 	curDoc.TotalSum += newStr
 	newRating := curDoc.TotalSum / curDoc.NumRatings
 	curDoc.Rating = newRating
+	
 	fmt.Println(w, "Rated Doctor")
 }
 
@@ -209,7 +201,6 @@ func getDoctorHelp(cntct string) Doctor {
 }
 
 
-// Machine learning
 func match(w http.ResponseWriter, r *http.Request) {
 	// Find top 5 highest-rated doctors who are closest to the user
 	matchFookinRef := firebase.NewReference(URL + "doctors")
